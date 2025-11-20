@@ -1,59 +1,46 @@
-# SignToolWeb
+# 🔐 Sign Tool Web - PDF Electronic Signature
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.0.
+Angular web application for signing PDF documents using local USB token.
 
-## Development server
+## 🚀 Features
 
-To start a local development server, run:
+- ✅ PDF file upload and preview
+- ✅ Integration with local SignTool daemon
+- ✅ Real-time service status monitoring
+- ✅ Signed PDF download
+- ✅ User-friendly interface
+
+## 🛠️ Technologies
+
+- **Angular 19**
+- **TypeScript**
+- **RxJS**
+- **Bootstrap/Custom CSS**
+
+## 📦 Installation
 
 ```bash
+npm install
+```
+
+## 🏃 Development Server
 ng serve
-```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Required Services
+This app requires SignToolDaemon running locally on http://localhost:5000
 
-## Code scaffolding
+## 📁 Project Structure
+src/
+├── app/
+│   ├── components/
+│   │   └── pdf-signer/
+│   ├── services/
+│   │   └── sign.service.ts
+│   └── models/
+│       └── sign-request.model.ts
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## 🌐 Deployment
+Deploy to Azure App Service or any static hosting service.
 
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## 📄 License
+MIT
