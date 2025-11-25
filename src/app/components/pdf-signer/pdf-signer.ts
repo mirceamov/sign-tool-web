@@ -20,6 +20,20 @@ export class PdfSignerComponent implements OnInit, OnDestroy {
   fieldName: string = 'signature1';
   tokenPin: string = '';
   
+  // Document metadata pentru semnătură
+  nrLucrare: string = '';
+  dataLucrare: string = '';
+  nrAct: string = '';
+  dataAct: string = '';
+  
+  // Coordonate pentru plasare manuală (alternativă la fieldName)
+  useCoordinates: boolean = false;
+  signatureX: number = 50;
+  signatureY: number = 100;
+  signatureWidth: number = 200;
+  signatureHeight: number = 80;
+  signaturePage: number = 1;
+  
   isLoading: boolean = false;
   signedPdfBase64: string = '';
   signedPdfUrl: SafeResourceUrl | null = null;
@@ -188,8 +202,18 @@ export class PdfSignerComponent implements OnInit, OnDestroy {
 
       const signRequest: SignRequest = {
         pdfBase64: pdfBase64,
-        fieldName: this.fieldName || 'signature1',
-        tokenPin: this.tokenPin
+        fieldName: this.useCoordinates ? '' : (this.fieldName || 'signature1'),
+        tokenPin: this.tokenPin,
+        nrLucrare: this.nrLucrare || undefined,
+        dataLucrare: this.dataLucrare ? new Date(this.dataLucrare).toISOString() : undefined,
+        nrAct: this.nrAct || undefined,
+        dataAct: this.dataAct ? new Date(this.dataAct).toISOString() : undefined,
+        // Trimite coordonate doar dacă useCoordinates = true
+        signatureX: this.useCoordinates ? this.signatureX : undefined,
+        signatureY: this.useCoordinates ? this.signatureY : undefined,
+        signatureWidth: this.useCoordinates ? this.signatureWidth : undefined,
+        signatureHeight: this.useCoordinates ? this.signatureHeight : undefined,
+        signaturePage: this.useCoordinates ? this.signaturePage : undefined
       };
 
       console.log('📤 Trimitere către signTool daemon...');
@@ -260,6 +284,16 @@ export class PdfSignerComponent implements OnInit, OnDestroy {
     this.successMessage = '';
     this.fieldName = 'signature1';
     this.tokenPin = '';
+    this.nrLucrare = '';
+    this.dataLucrare = '';
+    this.nrAct = '';
+    this.dataAct = '';
+    this.useCoordinates = false;
+    this.signatureX = 50;
+    this.signatureY = 100;
+    this.signatureWidth = 200;
+    this.signatureHeight = 80;
+    this.signaturePage = 1;
     
     console.log('🔄 Formular resetat');
   }

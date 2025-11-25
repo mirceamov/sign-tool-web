@@ -100,8 +100,79 @@
         id="fieldName"
         [(ngModel)]="fieldName"
         placeholder="signature1"
-        [disabled]="isLoading"
+        [disabled]="isLoading || useCoordinates"
       />
+    </div>
+
+    <div class="form-group">
+      <label>
+        <input 
+          type="checkbox" 
+          [(ngModel)]="useCoordinates"
+          [disabled]="isLoading"
+        />
+        Folosește coordonate X, Y în loc de câmp formular
+      </label>
+    </div>
+
+    <div *ngIf="useCoordinates" class="coordinates-section">
+      <h3>🎯 Coordonate Plasare Semnătură</h3>
+      <p class="help-text">Sistem coordonate: (0,0) = colț stânga-jos al paginii</p>
+      
+      <div class="form-row">
+        <div class="form-group half">
+          <label for="signatureX">X (de la stânga):</label>
+          <input 
+            type="number" 
+            id="signatureX"
+            [(ngModel)]="signatureX"
+            [disabled]="isLoading"
+          />
+        </div>
+        
+        <div class="form-group half">
+          <label for="signatureY">Y (de jos în sus):</label>
+          <input 
+            type="number" 
+            id="signatureY"
+            [(ngModel)]="signatureY"
+            [disabled]="isLoading"
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label for="signatureWidth">Lățime:</label>
+          <input 
+            type="number" 
+            id="signatureWidth"
+            [(ngModel)]="signatureWidth"
+            [disabled]="isLoading"
+          />
+        </div>
+        
+        <div class="form-group half">
+          <label for="signatureHeight">Înălțime:</label>
+          <input 
+            type="number" 
+            id="signatureHeight"
+            [(ngModel)]="signatureHeight"
+            [disabled]="isLoading"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="signaturePage">Pagină:</label>
+        <input 
+          type="number" 
+          id="signaturePage"
+          [(ngModel)]="signaturePage"
+          min="1"
+          [disabled]="isLoading"
+        />
+      </div>
     </div>
 
     <div class="form-group">
@@ -113,6 +184,54 @@
         placeholder="Introdu PIN-ul"
         [disabled]="isLoading"
       />
+    </div>
+
+    <h3>📋 Date Înregistrare Document</h3>
+    
+    <div class="form-row">
+      <div class="form-group half">
+        <label for="nrLucrare">Nr. Lucrare:</label>
+        <input 
+          type="text" 
+          id="nrLucrare"
+          [(ngModel)]="nrLucrare"
+          placeholder="Ex: 145/256052"
+          [disabled]="isLoading"
+        />
+      </div>
+      
+      <div class="form-group half">
+        <label for="dataLucrare">Data Lucrare:</label>
+        <input 
+          type="date" 
+          id="dataLucrare"
+          [(ngModel)]="dataLucrare"
+          [disabled]="isLoading"
+        />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group half">
+        <label for="nrAct">Nr. Act (RI1):</label>
+        <input 
+          type="text" 
+          id="nrAct"
+          [(ngModel)]="nrAct"
+          placeholder="Ex: 1234"
+          [disabled]="isLoading"
+        />
+      </div>
+      
+      <div class="form-group half">
+        <label for="dataAct">Data Act:</label>
+        <input 
+          type="date" 
+          id="dataAct"
+          [(ngModel)]="dataAct"
+          [disabled]="isLoading"
+        />
+      </div>
     </div>
 
     <button 
