@@ -1,11 +1,10 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SignService } from '../../services/sign.service';
 import { SignRequest, SignResponse } from '../../models/sign-request.model';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { interval, Subscription } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+// Nu mai folosim interval și subscription pentru monitoring automat
 
 @Component({
   selector: 'app-pdf-signer',
@@ -14,25 +13,28 @@ import { switchMap } from 'rxjs/operators';
   styleUrls: ['./pdf-signer.scss'],
   imports: [CommonModule, FormsModule]
 })
-export class PdfSignerComponent implements OnInit, OnDestroy {
+export class PdfSignerComponent implements OnInit {
   selectedFile: File | null = null;
   fileName: string = '';
-  fieldName: string = 'signature1';
   tokenPin: string = '';
   
-  // Document metadata pentru semnătură
-  nrLucrare: string = '';
-  dataLucrare: string = '';
-  nrAct: string = '';
-  dataAct: string = '';
+  // Nouă: Imagine semnătură JPG (opțională)
+  signatureImageFile: File | null = null;
+  signatureImageBase64: string = '';
+  signatureImageName: string = '';
   
-  // Coordonate pentru plasare manuală (alternativă la fieldName)
-  useCoordinates: boolean = false;
-  signatureX: number = 50;
-  signatureY: number = 100;
+  // Nou: Text semnătură personalizat
+  signatureText: string = '';
+  
+  // Coordonate pentru plasare (vizibile din prima)
+  signatureX: number = 350;
+  signatureY: number = 700;
   signatureWidth: number = 200;
   signatureHeight: number = 80;
   signaturePage: number = 1;
+  
+  // Nou: Checkbox operator
+  isOperator: boolean = false;
   
   isLoading: boolean = false;
   signedPdfBase64: string = '';
@@ -43,9 +45,6 @@ export class PdfSignerComponent implements OnInit, OnDestroy {
   previousStatus: 'unknown' | 'online' | 'offline' = 'unknown';
   
   showInstructions: boolean = false;
-  
-  private statusCheckSubscription?: Subscription;
-  private readonly STATUS_CHECK_INTERVAL = 10000;
 
   constructor(
     private signService: SignService,
@@ -56,12 +55,10 @@ export class PdfSignerComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     console.log('🚀 Component initialized');
     this.checkServiceStatus();
-    this.startStatusMonitoring();
+    // Nu mai pornim monitoring automat - doar manual cu butonul refresh
   }
 
-  ngOnDestroy(): void {
-    this.stopStatusMonitoring();
-  }
+  // Nu mai avem subscription de monitorizat
 
   checkServiceStatus(): void {
     console.log('🔍 Checking service status...');
@@ -81,33 +78,7 @@ export class PdfSignerComponent implements OnInit, OnDestroy {
     });
   }
 
-  private startStatusMonitoring(): void {
-    console.log('⏰ Starting status monitoring (every 10s)');
-    this.statusCheckSubscription = interval(this.STATUS_CHECK_INTERVAL)
-      .pipe(
-        switchMap(() => {
-          console.log('⏰ Interval tick - checking health...');
-          return this.signService.checkServiceHealth();
-        })
-      )
-      .subscribe({
-        next: () => {
-          this.updateServiceStatus('online');
-          this.cdr.markForCheck();
-        },
-        error: () => {
-          this.updateServiceStatus('offline');
-          this.cdr.markForCheck();
-        }
-      });
-  }
-
-  private stopStatusMonitoring(): void {
-    if (this.statusCheckSubscription) {
-      this.statusCheckSubscription.unsubscribe();
-      console.log('⏰ Status monitoring stopped');
-    }
-  }
+  // Monitoring eliminat - doar verificare manuală cu butonul refresh
 
   private updateServiceStatus(newStatus: 'online' | 'offline'): void {
     console.log('📊 updateServiceStatus called with:', newStatus);
@@ -118,22 +89,21 @@ export class PdfSignerComponent implements OnInit, OnDestroy {
 
     console.log('   serviceStatus NOW =', this.serviceStatus);
 
-    if (this.previousStatus === 'online' && newStatus === 'offline') {
-      console.warn('⚠️ ALERTĂ: SignTool daemon s-a oprit!');
-      this.errorMessage = '⚠️ Serviciul de semnare s-a oprit! Te rog repornește-l.';
-      this.showInstructions = true;
+    if (newStatus === 'offline') {
+      console.warn('⚠️ SignTool daemon offline');
+      this.errorMessage = '⚠️ Serviciul de semnare nu este disponibil. Verifică că daemon-ul rulează.';
     }
 
-    if (this.previousStatus === 'offline' && newStatus === 'online') {
-      console.log('✅ SignTool daemon a fost repornit');
+    if (newStatus === 'online') {
+      console.log('✅ SignTool daemon online');
+      if (this.previousStatus === 'offline') {
+        this.successMessage = '✅ Serviciul de semnare este online!';
+        setTimeout(() => {
+          this.successMessage = '';
+          this.cdr.markForCheck();
+        }, 3000);
+      }
       this.errorMessage = '';
-      this.showInstructions = false;
-      this.successMessage = '✅ Serviciul de semnare este din nou online!';
-      
-      setTimeout(() => {
-        this.successMessage = '';
-        this.cdr.markForCheck();
-      }, 5000);
     }
 
     const statusEmoji = newStatus === 'online' ? '✅' : '⚠️';
@@ -149,6 +119,10 @@ export class PdfSignerComponent implements OnInit, OnDestroy {
 
   toggleInstructions(): void {
     this.showInstructions = !this.showInstructions;
+  }
+
+  closeInstructions(): void {
+    this.showInstructions = false;
   }
 
   onFileSelected(event: Event): void {
@@ -179,6 +153,34 @@ export class PdfSignerComponent implements OnInit, OnDestroy {
     }
   }
 
+  async onSignatureImageSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      
+      if (!file.type.startsWith('image/')) {
+        this.errorMessage = 'Te rog selectează o imagine JPG/PNG';
+        return;
+      }
+      
+      const maxSize = 2 * 1024 * 1024; // 2MB
+      if (file.size > maxSize) {
+        this.errorMessage = 'Imaginea este prea mare (max 2MB)';
+        return;
+      }
+      
+      this.signatureImageFile = file;
+      this.signatureImageName = file.name;
+      
+      // Convert to base64
+      this.signatureImageBase64 = await this.signService.fileToBase64(file);
+      
+      this.errorMessage = '';
+      console.log('🖼️ Imagine semnătură selectată:', file.name);
+    }
+  }
+
   async signDocument(): Promise<void> {
     if (!this.selectedFile) {
       this.errorMessage = 'Te rog selectează un fișier PDF';
@@ -202,18 +204,20 @@ export class PdfSignerComponent implements OnInit, OnDestroy {
 
       const signRequest: SignRequest = {
         pdfBase64: pdfBase64,
-        fieldName: this.useCoordinates ? '' : (this.fieldName || 'signature1'),
+        fieldName: '',  // Nu mai folosim fieldName
         tokenPin: this.tokenPin,
-        nrLucrare: this.nrLucrare || undefined,
-        dataLucrare: this.dataLucrare ? new Date(this.dataLucrare).toISOString() : undefined,
-        nrAct: this.nrAct || undefined,
-        dataAct: this.dataAct ? new Date(this.dataAct).toISOString() : undefined,
-        // Trimite coordonate doar dacă useCoordinates = true
-        signatureX: this.useCoordinates ? this.signatureX : undefined,
-        signatureY: this.useCoordinates ? this.signatureY : undefined,
-        signatureWidth: this.useCoordinates ? this.signatureWidth : undefined,
-        signatureHeight: this.useCoordinates ? this.signatureHeight : undefined,
-        signaturePage: this.useCoordinates ? this.signaturePage : undefined
+        // Nou: Trimite imaginea semnăturii (opțional)
+        signatureImageBase64: this.signatureImageBase64 || undefined,
+        // Nou: Text semnătură personalizat
+        signatureText: this.signatureText || undefined,
+        // Nou: Flag operator
+        isOperator: this.isOperator,
+        // Coordonate (mereu trimise)
+        signatureX: this.signatureX,
+        signatureY: this.signatureY,
+        signatureWidth: this.signatureWidth,
+        signatureHeight: this.signatureHeight,
+        signaturePage: this.signaturePage
       };
 
       console.log('📤 Trimitere către signTool daemon...');
@@ -243,6 +247,9 @@ export class PdfSignerComponent implements OnInit, OnDestroy {
     this.successMessage = `✅ Document semnat cu succes la ${new Date(response.timestamp).toLocaleString('ro-RO')}`;
     
     console.log('📊 PDF URL creat pentru preview');
+    
+    // Forțează Angular să detecteze schimbările
+    this.cdr.detectChanges();
   }
 
   private handleSignError(error: Error): void {
@@ -253,6 +260,9 @@ export class PdfSignerComponent implements OnInit, OnDestroy {
     if (error.message.includes('nu se poate conecta')) {
       this.showInstructions = true;
     }
+    
+    // Forțează Angular să detecteze schimbările
+    this.cdr.detectChanges();
   }
 
   downloadSignedPdf(): void {
@@ -282,15 +292,18 @@ export class PdfSignerComponent implements OnInit, OnDestroy {
     this.signedPdfUrl = null;
     this.errorMessage = '';
     this.successMessage = '';
-    this.fieldName = 'signature1';
     this.tokenPin = '';
-    this.nrLucrare = '';
-    this.dataLucrare = '';
-    this.nrAct = '';
-    this.dataAct = '';
-    this.useCoordinates = false;
-    this.signatureX = 50;
-    this.signatureY = 100;
+    
+    // Reset nouă câmpuri
+    this.signatureImageFile = null;
+    this.signatureImageBase64 = '';
+    this.signatureImageName = '';
+    this.signatureText = '';
+    this.isOperator = false;
+    
+    // Reset coordonate la valori default
+    this.signatureX = 350;
+    this.signatureY = 700;
     this.signatureWidth = 200;
     this.signatureHeight = 80;
     this.signaturePage = 1;

@@ -22,10 +22,10 @@
   </div>
 
   <!-- Instrucțiuni repornire serviciu -->
-  <div *ngIf="serviceStatus === 'offline' || showInstructions" class="instructions-panel card">
+  <div *ngIf="showInstructions" class="instructions-panel card">
     <div class="instructions-header">
       <h3>⚠️ Serviciul de Semnare Nu Este Disponibil</h3>
-      <button class="btn-close" (click)="showInstructions = false">✕</button>
+      <button class="btn-close" (click)="closeInstructions()">✕</button>
     </div>
     
     <div class="instructions-content">
@@ -76,162 +76,135 @@
   </div>
 
   <div class="upload-section card">
-    <h2>📄 Selectează Document PDF</h2>
+    <h2>📄 Document și Semnătură</h2>
     
-    <div class="file-input-wrapper">
-      <input 
-        type="file" 
-        id="pdfFile"
-        (change)="onFileSelected($event)" 
-        accept=".pdf"
-        [disabled]="isLoading"
-      />
-      <label for="pdfFile" class="file-label">
-        <span class="icon">📁</span>
-        <span *ngIf="!fileName">Alege fișier PDF</span>
-        <span *ngIf="fileName">{{ fileName }}</span>
-      </label>
-    </div>
-
+    <!-- 1. PDF Upload -->
     <div class="form-group">
-      <label for="fieldName">Nume câmp semnătură (opțional):</label>
-      <input 
-        type="text" 
-        id="fieldName"
-        [(ngModel)]="fieldName"
-        placeholder="signature1"
-        [disabled]="isLoading || useCoordinates"
-      />
-    </div>
-
-    <div class="form-group">
-      <label>
+      <label for="pdfFile">Document PDF (obligatoriu):</label>
+      <div class="file-input-wrapper">
         <input 
-          type="checkbox" 
-          [(ngModel)]="useCoordinates"
+          type="file" 
+          id="pdfFile"
+          (change)="onFileSelected($event)" 
+          accept=".pdf"
           [disabled]="isLoading"
         />
-        Folosește coordonate X, Y în loc de câmp formular
-      </label>
+        <label for="pdfFile" class="file-label">
+          <span class="icon">📁</span>
+          <span *ngIf="!fileName">Alege fișier PDF</span>
+          <span *ngIf="fileName">{{ fileName }}</span>
+        </label>
+      </div>
     </div>
 
-    <div *ngIf="useCoordinates" class="coordinates-section">
-      <h3>🎯 Coordonate Plasare Semnătură</h3>
-      <p class="help-text">Sistem coordonate: (0,0) = colț stânga-jos al paginii</p>
-      
-      <div class="form-row">
-        <div class="form-group half">
-          <label for="signatureX">X (de la stânga):</label>
-          <input 
-            type="number" 
-            id="signatureX"
-            [(ngModel)]="signatureX"
-            [disabled]="isLoading"
-          />
-        </div>
-        
-        <div class="form-group half">
-          <label for="signatureY">Y (de jos în sus):</label>
-          <input 
-            type="number" 
-            id="signatureY"
-            [(ngModel)]="signatureY"
-            [disabled]="isLoading"
-          />
-        </div>
+    <!-- 2. Signature Image Upload (NEW) -->
+    <div class="form-group">
+      <label for="signatureImage">Imagine Semnătură JPG/PNG (opțional):</label>
+      <div class="file-input-wrapper">
+        <input 
+          type="file" 
+          id="signatureImage"
+          (change)="onSignatureImageSelected($event)" 
+          accept="image/jpeg,image/jpg,image/png"
+          [disabled]="isLoading"
+        />
+        <label for="signatureImage" class="file-label">
+          <span class="icon">🖼️</span>
+          <span *ngIf="!signatureImageName">Alege imagine semnătură</span>
+          <span *ngIf="signatureImageName">{{ signatureImageName }}</span>
+        </label>
       </div>
+      <small class="help-text">Imaginea va apărea în stânga semnăturii</small>
+    </div>
 
-      <div class="form-row">
-        <div class="form-group half">
-          <label for="signatureWidth">Lățime:</label>
-          <input 
-            type="number" 
-            id="signatureWidth"
-            [(ngModel)]="signatureWidth"
-            [disabled]="isLoading"
-          />
-        </div>
-        
-        <div class="form-group half">
-          <label for="signatureHeight">Înălțime:</label>
-          <input 
-            type="number" 
-            id="signatureHeight"
-            [(ngModel)]="signatureHeight"
-            [disabled]="isLoading"
-          />
-        </div>
-      </div>
+    <!-- 3. Signature Text (NEW) -->
+    <div class="form-group" style="
+    display: flex;
+    flex-direction: column;
+">
+      <label for="signatureText">Text Semnătură (opțional pentru non-operator):</label>
+      <textarea 
+        id="signatureText"
+        [(ngModel)]="signatureText"
+        placeholder="Ex: Sigilat digital de&#10;Instituția Noastră&#10;Avizare"
+        rows="4"
+        [disabled]="isLoading || isOperator"
+      ></textarea>
+      <small class="help-text" *ngIf="isOperator">Textul este generat automat pentru operatori</small>
+      <small class="help-text" *ngIf="!isOperator">Textul personalizat + Data și ora vor apărea pe semnătură</small>
+    </div>
 
-      <div class="form-group">
-        <label for="signaturePage">Pagină:</label>
+    <!-- 4. Coordinates Section (always visible) -->
+    <h3>🎯 Coordonate Plasare Semnătură</h3>
+    <p class="help-text">Sistem coordonate: (0,0) = colț stânga-jos al paginii</p>
+    
+    <div class="form-row">
+      <div class="form-group half">
+        <label for="signatureX">X (de la stânga):</label>
         <input 
           type="number" 
-          id="signaturePage"
-          [(ngModel)]="signaturePage"
-          min="1"
+          id="signatureX"
+          [(ngModel)]="signatureX"
+          [disabled]="isLoading"
+        />
+      </div>
+      
+      <div class="form-group half">
+        <label for="signatureY">Y (de jos în sus):</label>
+        <input 
+          type="number" 
+          id="signatureY"
+          [(ngModel)]="signatureY"
+          [disabled]="isLoading"
+        />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group half">
+        <label for="signatureWidth">Lățime:</label>
+        <input 
+          type="number" 
+          id="signatureWidth"
+          [(ngModel)]="signatureWidth"
+          [disabled]="isLoading"
+        />
+      </div>
+      
+      <div class="form-group half">
+        <label for="signatureHeight">Înălțime:</label>
+        <input 
+          type="number" 
+          id="signatureHeight"
+          [(ngModel)]="signatureHeight"
           [disabled]="isLoading"
         />
       </div>
     </div>
 
     <div class="form-group">
-      <label for="tokenPin">PIN Token (pentru test):</label>
+      <label for="signaturePage">Pagină:</label>
       <input 
-        type="password" 
-        id="tokenPin"
-        [(ngModel)]="tokenPin"
-        placeholder="Introdu PIN-ul"
+        type="number" 
+        id="signaturePage"
+        [(ngModel)]="signaturePage"
+        min="1"
         [disabled]="isLoading"
       />
     </div>
 
-    <h3>📋 Date Înregistrare Document</h3>
-    
-    <div class="form-row">
-      <div class="form-group half">
-        <label for="nrLucrare">Nr. Lucrare:</label>
+    <!-- 5. Operator Checkbox (NEW) -->
+    <div class="form-group">
+      <label class="checkbox-label">
         <input 
-          type="text" 
-          id="nrLucrare"
-          [(ngModel)]="nrLucrare"
-          placeholder="Ex: 145/256052"
+          type="checkbox"
+          id="isOperator"
+          name="isOperator"
+          [(ngModel)]="isOperator"
           [disabled]="isLoading"
         />
-      </div>
-      
-      <div class="form-group half">
-        <label for="dataLucrare">Data Lucrare:</label>
-        <input 
-          type="date" 
-          id="dataLucrare"
-          [(ngModel)]="dataLucrare"
-          [disabled]="isLoading"
-        />
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div class="form-group half">
-        <label for="nrAct">Nr. Act (RI1):</label>
-        <input 
-          type="text" 
-          id="nrAct"
-          [(ngModel)]="nrAct"
-          placeholder="Ex: 1234"
-          [disabled]="isLoading"
-        />
-      </div>
-      
-      <div class="form-group half">
-        <label for="dataAct">Data Act:</label>
-        <input 
-          type="date" 
-          id="dataAct"
-          [(ngModel)]="dataAct"
-          [disabled]="isLoading"
-        />
-      </div>
+        Este Operator? (semnătură automată cu date token)
+      </label>
     </div>
 
     <button 

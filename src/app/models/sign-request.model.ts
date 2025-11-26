@@ -3,13 +3,16 @@ export interface SignRequest {
     fieldName: string;
     tokenPin?: string;
     
-    // Document metadata pentru template semnătură
-    nrLucrare?: string;
-    dataLucrare?: string;
-    nrAct?: string;
-    dataAct?: string;
+    // Nou: Imagine semnătură (opțional)
+    signatureImageBase64?: string;
     
-    // Coordonate pentru plasare manuală semnătură (alternativă la fieldName)
+    // Nou: Text semnătură personalizat
+    signatureText?: string;
+    
+    // Nou: Flag operator
+    isOperator?: boolean;
+    
+    // Coordonate pentru plasare semnătură
     signatureX?: number;
     signatureY?: number;
     signatureWidth?: number;
