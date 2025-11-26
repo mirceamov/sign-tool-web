@@ -24,9 +24,28 @@ npm install
 ```
 
 ## 🏃 Development Server
-ng serve
 
-## Required Services
+```bash
+ng serve
+```
+
+Navigate to `http://localhost:4200/`
+
+## 🌐 Deployment to GitHub Pages
+
+### Build for production:
+```bash
+ng build --configuration production --base-href "/sign-tool-web/"
+```
+
+### Deploy to GitHub Pages:
+```bash
+npx angular-cli-ghpages --dir=dist/sign-tool-web/browser
+```
+
+**Live URL:** https://mirceamov.github.io/sign-tool-web/
+
+## 📋 Required Services
 This app requires SignToolDaemon running locally on http://localhost:5000
 
 ## 📁 Project Structure
@@ -38,9 +57,6 @@ src/
 │   │   └── sign.service.ts
 │   └── models/
 │       └── sign-request.model.ts
-
-## 🌐 Deployment
-Deploy to Azure App Service or any static hosting service.
 
 ## 📄 License
 MIT
