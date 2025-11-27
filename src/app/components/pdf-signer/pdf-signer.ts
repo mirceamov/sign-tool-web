@@ -16,7 +16,6 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 export class PdfSignerComponent implements OnInit {
   selectedFile: File | null = null;
   fileName: string = '';
-  tokenPin: string = '';
   
   // Nouă: Imagine semnătură JPG (opțională)
   signatureImageFile: File | null = null;
@@ -204,8 +203,6 @@ export class PdfSignerComponent implements OnInit {
 
       const signRequest: SignRequest = {
         pdfBase64: pdfBase64,
-        fieldName: '',  // Nu mai folosim fieldName
-        tokenPin: this.tokenPin,
         // Nou: Trimite imaginea semnăturii (opțional)
         signatureImageBase64: this.signatureImageBase64 || undefined,
         // Nou: Text semnătură personalizat
@@ -292,7 +289,6 @@ export class PdfSignerComponent implements OnInit {
     this.signedPdfUrl = null;
     this.errorMessage = '';
     this.successMessage = '';
-    this.tokenPin = '';
     
     // Reset nouă câmpuri
     this.signatureImageFile = null;

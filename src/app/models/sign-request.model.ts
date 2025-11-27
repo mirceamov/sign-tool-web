@@ -1,7 +1,5 @@
 export interface SignRequest {
     pdfBase64: string;
-    fieldName: string;
-    tokenPin?: string;
     
     // Nou: Imagine semnătură (opțional)
     signatureImageBase64?: string;
